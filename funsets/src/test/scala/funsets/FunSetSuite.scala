@@ -77,6 +77,7 @@ class FunSetSuite extends FunSuite {
     val s1 = singletonSet(1)
     val s2 = singletonSet(2)
     val s3 = singletonSet(3)
+    val s4 = singletonSet(4)
   }
 
   /**
@@ -110,5 +111,74 @@ class FunSetSuite extends FunSuite {
     }
   }
 
+  test("intersect contains only elements common to all sets") {
+    new TestSets {
+      val s = union(s1, s2)
+      val t = union(s2, s3)
+      val r = intersect(s, t)
+
+      assert(contains(r, 2), "In both")
+      assert(!contains(r, 1), "Only s")
+      assert(!contains(r, 3), "only t")
+    }
+  }
+
+  test("diff contains only elements of one set which are not in other") {
+    new TestSets {
+      val s = union(union(union(s1, s2), s3), s4)
+      val r = diff(s, s4)
+
+      assert(contains(r, 1))
+      assert(contains(r, 2))
+      assert(contains(r, 3))
+      assert(!contains(r, 4))
+    }
+  }
+
+  test("filter contains only elements of a set satisfying predicate") {
+    new TestSets {
+      val s = union(union(union(s1, s2), s3), s4)
+      val r = filter(s, _ > 2)
+
+      assert(!contains(r, 1), "1 < 2 should not be in result")
+      assert(!contains(r, 2), "2 <= 2 should not be in result")
+      assert(contains(r, 3), "3 > 2 should not be in result")
+      assert(contains(r, 4), "4 > 2 should not be in result")
+    }
+  }
+
+  test("for all tests") {
+    new TestSets {
+
+      val set1 = union(union(singletonSet(1000), singletonSet(-1000)), singletonSet(0))
+
+      assert(forall(set1, (x) => x <= 1000 && x >= -1000), "[-1000, 1000]")
+      assert(forall(set1, _ != 2), "!= 2")
+      assert(!forall(set1, _ == 0), "== 0 should fail")
+      assert(!forall(set1, _ == -1000), "== -1000 should fail")
+    }
+  }
+
+  test("exists tests") {
+    new TestSets {
+
+      val set1 = union(union(union(singletonSet(1000), singletonSet(-1000)), singletonSet(0)), singletonSet(-1))
+
+      assert(!exists(set1, (x) => x > 1000 || x < -1000), "any numbers in (-Inf, -1000) (1000, Inf) do not exist")
+      assert(!exists(set1, _ == 2), "!= 2")
+      assert(exists(set1, _ > 0), "there are numbers > 0")
+      assert(exists(set1, _ == 1000), "1000 is part of the set")
+      assert(!exists(set1, _ == 999), "999 is not part of the set")
+    }
+  }
+
+  test("map tests") {
+    new TestSets {
+
+      val set1 = union(union(union(singletonSet(1), singletonSet(10)), singletonSet(-1)), singletonSet(1000))
+      val set2 = FunSets.toString(map(set1, _ - 1))
+      assert(set2 == "{-2,0,9,999}")
+    }
+  }
 
 }
